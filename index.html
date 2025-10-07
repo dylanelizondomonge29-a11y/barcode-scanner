@@ -15,12 +15,12 @@
 
     h1 { color: #333; }
 
-    /* Contenedor de cámara rectangular */
+    /* Contenedor de cámara más pequeño y rectangular */
     #reader {
-      width: 60%;
-      max-width: 200px;  /* ancho máximo */
-      height: 100px;     /* altura pequeña para forma horizontal */
-      margin: 10px auto;
+      width: 80%;          /* ocupa solo 80% del ancho de la pantalla */
+      max-width: 300px;    /* ancho máximo */
+      height: 100px;       /* altura baja para forma horizontal */
+      margin: 20px auto;
       border: 1px solid #ccc;
       border-radius: 8px;
       overflow: hidden;
@@ -126,7 +126,7 @@
 
     function iniciarScanner() {
       const containerWidth = document.getElementById('reader').clientWidth;
-      const qrboxHeight = 120; // altura pequeña para forma rectangular
+      const qrboxHeight = 100; // altura baja para forma rectangular
 
       const config = { 
         fps: 10, 
