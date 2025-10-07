@@ -8,18 +8,16 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
       text-align: center;
-      background-color: #f4f4f4;
+      padding: 20px;
+      background: #f4f4f4;
     }
-
     h1 { color: #333; }
 
-    /* Contenedor de cámara más pequeño y rectangular */
     #reader {
-      width: 80%;          /* ocupa solo 80% del ancho de la pantalla */
-      max-width: 300px;    /* ancho máximo */
-      height: 100px;       /* altura baja para forma horizontal */
+      width: 90%;       /* ocupa casi todo el ancho en móvil */
+      max-width: 360px; /* ancho máximo */
+      height: 120px;    /* altura pequeña para forma rectangular */
       margin: 20px auto;
       border: 1px solid #ccc;
       border-radius: 8px;
@@ -28,29 +26,28 @@
     }
 
     input, button {
-      width: 100%;
-      max-width: 400px;
-      padding: 12px;
-      margin-top: 10px;
+      width: 90%;
+      max-width: 360px;
+      padding: 10px;
+      margin: 10px auto;
       font-size: 16px;
-      box-sizing: border-box;
+      display: block;
     }
-
-    .error { color: red; }
 
     .resultado {
       background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       padding: 15px;
       margin-top: 20px;
+      border-radius: 8px;
       text-align: left;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
+
+    .error { color: red; }
   </style>
 </head>
 <body>
   <h1>Escanear Código de Barras</h1>
-
   <div id="reader"></div>
   <div id="resultado"></div>
   <button id="reiniciarBtn" style="display:none;" onclick="reiniciarScanner()">🔄 Volver a escanear</button>
@@ -60,31 +57,8 @@
   <button onclick="consultarCodigo()">Consultar</button>
 
   <script>
-    const apiKey = "123456"; 
-    let html5QrcodeScanner;
-
-    function mostrarResultado(data, decodedText) {
-      if(!data.error && data.informacion){
-        const info = data.informacion;
-        document.getElementById('resultado').innerHTML = `
-          <div class="resultado">
-            <h3>Información del Producto:</h3>
-            <p><strong>Producto:</strong> ${info.producto}</p>
-            <p><strong>Descripción:</strong> ${info.descripcion}</p>
-            <p><strong>Precio:</strong> ${info.precio}</p>
-            <p><strong>Stock:</strong> ${info.stock}</p>
-            <p><strong>Categoría:</strong> ${info.categoria}</p>
-            <p><strong>Fecha de recepción:</strong> ${data.fecha_recepcion}</p>
-          </div>
-        `;
-      } else {
-        document.getElementById('resultado').innerHTML = `
-          <p class="error"><strong>¡Código no encontrado en la base de datos!</strong></p>
-          <p>Código ingresado: ${decodedText}</p>
-        `;
-      }
-      document.getElementById('reiniciarBtn').style.display = "block";
-    }
+    const apiKey = "123456";
+    let html5QrScanner;
 
     async function consultarCodigoManual(codigo) {
       try {
@@ -95,49 +69,59 @@
         const data = JSON.parse(dataWrapped.contents);
         mostrarResultado(data, codigo);
       } catch (err) {
-        console.error("Error consultando API:", err);
+        console.error(err);
         document.getElementById('resultado').innerHTML = `<p class="error">❌ Error al consultar la API.</p>`;
         document.getElementById('reiniciarBtn').style.display = "block";
       }
     }
 
+    function mostrarResultado(data, decodedText) {
+      if (!data.error && data.informacion) {
+        const info = data.informacion;
+        document.getElementById('resultado').innerHTML = `
+          <div class="resultado">
+            <p><strong>Producto:</strong> ${info.producto}</p>
+            <p><strong>Descripción:</strong> ${info.descripcion}</p>
+            <p><strong>Precio:</strong> ${info.precio}</p>
+            <p><strong>Stock:</strong> ${info.stock}</p>
+            <p><strong>Categoría:</strong> ${info.categoria}</p>
+            <p><strong>Fecha de recepción:</strong> ${data.fecha_recepcion}</p>
+          </div>
+        `;
+      } else {
+        document.getElementById('resultado').innerHTML = `<p class="error">¡Código no encontrado!</p><p>${decodedText}</p>`;
+      }
+      document.getElementById('reiniciarBtn').style.display = "block";
+    }
+
     function consultarCodigo() {
       const codigo = document.getElementById('manualCode').value.trim();
-      if(codigo) {
-        document.getElementById('resultado').innerHTML = `Consultando información para: ${codigo}...`;
-        consultarCodigoManual(codigo);
-      }
+      if(codigo) consultarCodigoManual(codigo);
     }
 
     function onScanSuccess(decodedText, decodedResult) {
-      document.getElementById('resultado').innerHTML = `Código escaneado: ${decodedText}<br>Consultando información...`;
-
-      html5QrcodeScanner.clear().then(() => {
-        console.log("Cámara detenida después del escaneo");
+      html5QrScanner.clear().then(() => {
+        console.log("Cámara detenida tras escanear");
         document.getElementById('reiniciarBtn').style.display = "block";
-      }).catch(err => console.error("Error al detener la cámara:", err));
-
+      });
       consultarCodigoManual(decodedText);
     }
 
     function onScanFailure(error) {
-      console.warn(`Error de escaneo: ${error}`);
+      // opcional: console.warn(error);
     }
 
     function iniciarScanner() {
       const containerWidth = document.getElementById('reader').clientWidth;
-      const qrboxHeight = 100; // altura baja para forma rectangular
+      const qrboxHeight = 120; // rectangular
 
-      const config = { 
-        fps: 10, 
-        qrbox: { width: containerWidth, height: qrboxHeight },
-        formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13 ] 
-      };
-
-      document.getElementById('reader').style.height = qrboxHeight + 'px';
-
-      html5QrcodeScanner = new Html5QrcodeScanner("reader", config);
-      html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+      html5QrScanner = new Html5Qrcode("reader");
+      html5QrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: containerWidth, height: qrboxHeight }, formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13] },
+        onScanSuccess,
+        onScanFailure
+      ).catch(err => console.error("Error iniciando la cámara:", err));
     }
 
     function reiniciarScanner() {
