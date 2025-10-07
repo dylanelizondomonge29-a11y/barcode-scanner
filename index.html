@@ -12,21 +12,17 @@
       padding: 20px;
       background: #f4f4f4;
     }
-
     h1 { color: #333; }
-
-    /* Contenedor de cámara rectangular */
     #reader {
       width: 80%;
       max-width: 360px;
-      height: 150px; /* altura suficiente para leer EAN-13 */
+      height: 200px; /* altura suficiente para EAN-13 */
       margin: 20px auto;
       border: 1px solid #ccc;
       border-radius: 8px;
       overflow: hidden;
       background: #000;
     }
-
     input, button {
       width: 80%;
       max-width: 360px;
@@ -35,7 +31,6 @@
       font-size: 16px;
       display: block;
     }
-
     .resultado {
       background: #fff;
       padding: 15px;
@@ -44,7 +39,6 @@
       text-align: left;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-
     .error { color: red; }
   </style>
 </head>
@@ -115,7 +109,7 @@
 
     function iniciarScanner() {
       const containerWidth = document.getElementById('reader').clientWidth;
-      const qrboxHeight = 150; // altura rectangular ideal
+      const qrboxHeight = 200; // altura mínima para EAN-13
 
       html5QrScanner = new Html5Qrcode("reader");
       html5QrScanner.start(
