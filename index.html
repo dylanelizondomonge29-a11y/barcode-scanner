@@ -16,7 +16,7 @@ h1 { color: #333; }
 #reader {
   width: 80%;
   max-width: 360px;
-  height: 120px; /* altura más horizontal */
+  height: 200px; /* suficiente para códigos de barras */
   margin: 20px auto;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -43,9 +43,11 @@ input, button {
 </style>
 </head>
 <body>
-<h1>Escaneo automático de Código de Barras</h1>
+<h1>Escaneo de Código de Barras</h1>
+
 <div id="reader"></div>
 <div id="resultado"></div>
+<button id="startBtn">▶️ Encender cámara</button>
 
 <h3>O ingresar código manualmente:</h3>
 <input type="text" id="manualCode" placeholder="Escribe el código">
@@ -53,8 +55,9 @@ input, button {
 
 <script>
 const apiKey = "123456";
-let scanner;
+let scanner = null;
 
+// Función para consultar API
 async function consultarCodigoManual(codigo) {
   try {
     const originalURL = `http://62.146.226.238/codigos/codigo_barras.php?api_key=${apiKey}&codigo_barras=${codigo}`;
@@ -91,34 +94,38 @@ function consultarCodigo() {
   if(codigo) consultarCodigoManual(codigo);
 }
 
+// Función que se llama al leer un código
 function onScanSuccess(decodedText, decodedResult) {
-  // Apenas se detecta el código, detiene la cámara
-  scanner.stop().then(() => {
-    console.log("Cámara detenida tras escanear");
-  }).catch(err => console.error(err));
-
+  if(scanner){
+    scanner.stop().then(() => {
+      console.log("Cámara detenida tras escanear");
+    }).catch(err => console.error(err));
+  }
   consultarCodigoManual(decodedText);
 }
 
-function onScanFailure(error) {
-  // Ignorar frames que no detectan código
-}
+// Ignorar errores de frames sin código
+function onScanFailure(error){}
 
-function iniciarScanner() {
-  const containerWidth = document.getElementById('reader').clientWidth;
-  const qrboxHeight = 120; // rectangular horizontal
+// Iniciar scanner
+function iniciarScanner(){
+  if(scanner) return; // evitar duplicar
+  const readerWidth = document.getElementById("reader").clientWidth;
+  const qrboxHeight = 200;
 
   scanner = new Html5Qrcode("reader");
   scanner.start(
     { facingMode: "environment" },
-    { fps: 10, qrbox: { width: containerWidth, height: qrboxHeight } },
+    { fps: 10, qrbox: { width: readerWidth, height: qrboxHeight } },
     onScanSuccess,
     onScanFailure
   ).catch(err => console.error("Error iniciando cámara:", err));
 }
 
-// Inicia scanner automáticamente al cargar la página
-window.onload = iniciarScanner;
+// Botón para encender la cámara manualmente
+document.getElementById("startBtn").addEventListener("click", () => {
+  iniciarScanner();
+});
 </script>
 </body>
 </html>
