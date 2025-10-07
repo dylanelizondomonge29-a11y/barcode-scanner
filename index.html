@@ -4,39 +4,122 @@
 <meta charset="UTF-8">
 <title>Escaneo de Código de Barras</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 <style>
-#reader {
-  width: 80%;
-  max-width: 360px;
-  height: 300px;
-  margin: 20px auto;
-  border: 1px solid #ccc;
-  background: #000;
+body {
+  font-family: Arial, sans-serif;
+  text-align:center;
+  padding:20px;
+  background:#f4f4f4;
 }
+#reader {
+  width:80%;
+  max-width:360px;
+  height:200px; /* tamaño rectangular */
+  margin:20px auto;
+  border:1px solid #ccc;
+  border-radius:8px;
+  overflow:hidden;
+  background:#000;
+}
+input, button {
+  width:80%;
+  max-width:360px;
+  padding:10px;
+  margin:10px auto;
+  font-size:16px;
+  display:block;
+}
+.resultado {
+  background:#fff;
+  padding:15px;
+  margin-top:20px;
+  border-radius:8px;
+  text-align:left;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+.error { color:red; }
 </style>
 </head>
 <body>
+
+<h1>Escaneo de Código de Barras</h1>
 <div id="reader"></div>
-<button id="startBtn">▶️ Activar cámara</button>
+<div id="resultado"></div>
+<button id="reiniciarBtn" style="display:none;" onclick="reiniciarScanner()">🔄 Volver a escanear</button>
+
+<h3>O ingresar código manualmente:</h3>
+<input type="text" id="manualCode" placeholder="Escribe el código">
+<button onclick="consultarCodigo()">Consultar</button>
 
 <script>
-let scanner = null;
+const apiKey = "123456";
+let html5QrScanner;
 
-document.getElementById("startBtn").addEventListener("click", () => {
-  if(scanner) return;
-  const readerWidth = document.getElementById("reader").clientWidth;
-  scanner = new Html5Qrcode("reader");
-  scanner.start(
+async function consultarCodigoManual(codigo) {
+  try {
+    const proxyURL = `proxy.php?api_key=${apiKey}&codigo_barras=${codigo}`;
+    const response = await fetch(proxyURL);
+    const data = await response.json();
+    mostrarResultado(data, codigo);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('resultado').innerHTML = `<p class="error">❌ Error al consultar la API.</p>`;
+    document.getElementById('reiniciarBtn').style.display = "block";
+  }
+}
+
+function mostrarResultado(data, decodedText) {
+  if (!data.error && data.informacion) {
+    const info = data.informacion;
+    document.getElementById('resultado').innerHTML = `
+      <div class="resultado">
+        <p><strong>Producto:</strong> ${info.producto}</p>
+        <p><strong>Descripción:</strong> ${info.descripcion}</p>
+        <p><strong>Precio:</strong> ${info.precio}</p>
+        <p><strong>Stock:</strong> ${info.stock}</p>
+        <p><strong>Categoría:</strong> ${info.categoria}</p>
+        <p><strong>Fecha de recepción:</strong> ${data.fecha_recepcion}</p>
+      </div>`;
+  } else {
+    document.getElementById('resultado').innerHTML = `<p class="error">¡Código no encontrado!</p><p>${decodedText}</p>`;
+  }
+  document.getElementById('reiniciarBtn').style.display = "block";
+}
+
+function consultarCodigo() {
+  const codigo = document.getElementById('manualCode').value.trim();
+  if(codigo) consultarCodigoManual(codigo);
+}
+
+function onScanSuccess(decodedText) {
+  // Apaga la cámara automáticamente
+  html5QrScanner.clear().then(() => console.log("Cámara detenida tras escanear")).catch(console.error);
+  consultarCodigoManual(decodedText);
+}
+
+function onScanFailure(error) {
+  // opcional: console.warn(error);
+}
+
+function iniciarScanner() {
+  const containerWidth = document.getElementById('reader').clientWidth;
+  html5QrScanner = new Html5Qrcode("reader");
+  html5QrScanner.start(
     { facingMode: "environment" },
-    { fps: 10, qrbox: { width: readerWidth, height: 250 } },
-    (decodedText) => {
-      console.log("Código leído:", decodedText);
-      scanner.stop().then(() => console.log("Cámara detenida")).catch(console.error);
-    },
-    (error) => { /* ignorar errores de frame */ }
+    { fps:10, qrbox:{width:containerWidth, height:200} },
+    onScanSuccess,
+    onScanFailure
   ).catch(err => console.error("Error iniciando cámara:", err));
-});
+}
+
+function reiniciarScanner() {
+  document.getElementById('resultado').innerHTML = "";
+  document.getElementById('reiniciarBtn').style.display = "none";
+  iniciarScanner();
+}
+
+window.onload = iniciarScanner;
 </script>
 </body>
 </html>
