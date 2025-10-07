@@ -103,17 +103,17 @@ function onScanSuccess(decodedText, decodedResult) {
 }
 
 function onScanFailure(error) {
-  // opcional
+  // opcional: console.warn(error);
 }
 
 function iniciarScanner() {
   const containerWidth = document.getElementById('reader').clientWidth;
-  const qrboxHeight = 200; // suficiente altura para EAN-13
+  const qrboxHeight = 200; 
 
   html5QrScanner = new Html5Qrcode("reader");
   html5QrScanner.start(
     { facingMode: "environment" },
-    { fps: 10, qrbox: { width: containerWidth, height: qrboxHeight }, formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13] },
+    { fps: 10, qrbox: { width: containerWidth, height: qrboxHeight } }, // sin limitar formato
     onScanSuccess,
     onScanFailure
   ).catch(err => console.error("Error iniciando la cámara:", err));
