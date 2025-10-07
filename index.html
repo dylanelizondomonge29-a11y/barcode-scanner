@@ -58,6 +58,7 @@ let html5QrScanner;
 
 async function consultarCodigoManual(codigo) {
   try {
+    // Usamos el proxy local
     const proxyURL = `proxy.php?codigo=${encodeURIComponent(codigo)}`;
     const response = await fetch(proxyURL);
     const data = await response.json();
@@ -68,6 +69,7 @@ async function consultarCodigoManual(codigo) {
     document.getElementById('reiniciarBtn').style.display = "block";
   }
 }
+
 
 function mostrarResultado(data, decodedText) {
   if (!data.error && data.informacion) {
