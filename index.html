@@ -12,12 +12,14 @@
       padding: 20px;
       background: #f4f4f4;
     }
+
     h1 { color: #333; }
 
+    /* Contenedor de cámara rectangular */
     #reader {
-      width: 90%;       /* ocupa casi todo el ancho en móvil */
-      max-width: 360px; /* ancho máximo */
-      height: 120px;    /* altura pequeña para forma rectangular */
+      width: 80%;
+      max-width: 360px;
+      height: 150px; /* altura suficiente para leer EAN-13 */
       margin: 20px auto;
       border: 1px solid #ccc;
       border-radius: 8px;
@@ -26,7 +28,7 @@
     }
 
     input, button {
-      width: 90%;
+      width: 80%;
       max-width: 360px;
       padding: 10px;
       margin: 10px auto;
@@ -113,7 +115,7 @@
 
     function iniciarScanner() {
       const containerWidth = document.getElementById('reader').clientWidth;
-      const qrboxHeight = 120; // rectangular
+      const qrboxHeight = 150; // altura rectangular ideal
 
       html5QrScanner = new Html5Qrcode("reader");
       html5QrScanner.start(
