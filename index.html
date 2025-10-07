@@ -6,118 +6,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  padding: 20px;
-  background: #f4f4f4;
-}
-h1 { color: #333; }
 #reader {
   width: 80%;
   max-width: 360px;
-  height: 300px; /* altura suficiente para activar la cámara */
+  height: 300px;
   margin: 20px auto;
   border: 1px solid #ccc;
-  border-radius: 8px;
-  overflow: hidden;
   background: #000;
 }
-input, button {
-  width: 80%;
-  max-width: 360px;
-  padding: 10px;
-  margin: 10px auto;
-  font-size: 16px;
-  display: block;
-}
-.resultado {
-  background: #fff;
-  padding: 15px;
-  margin-top: 20px;
-  border-radius: 8px;
-  text-align: left;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-.error { color: red; }
 </style>
 </head>
 <body>
-<h1>Escaneo de Código de Barras</h1>
-
 <div id="reader"></div>
-<div id="resultado"></div>
 <button id="startBtn">▶️ Activar cámara</button>
 
-<h3>O ingresar código manualmente:</h3>
-<input type="text" id="manualCode" placeholder="Escribe el código">
-<button onclick="consultarCodigo()">Consultar</button>
-
 <script>
-const apiKey = "123456";
 let scanner = null;
 
-// Consultar API
-async function consultarCodigoManual(codigo) {
-  try {
-    const originalURL = `http://62.146.226.238/codigos/codigo_barras.php?api_key=${apiKey}&codigo_barras=${codigo}`;
-    const proxyURL = `https://api.allorigins.win/get?url=${encodeURIComponent(originalURL)}`;
-    const response = await fetch(proxyURL);
-    const dataWrapped = await response.json();
-    const data = JSON.parse(dataWrapped.contents);
-    mostrarResultado(data, codigo);
-  } catch (err) {
-    console.error(err);
-    document.getElementById('resultado').innerHTML = `<p class="error">❌ Error al consultar la API.</p>`;
-  }
-}
-
-function mostrarResultado(data, decodedText) {
-  if (!data.error && data.informacion) {
-    const info = data.informacion;
-    document.getElementById('resultado').innerHTML = `
-      <div class="resultado">
-        <p><strong>Producto:</strong> ${info.producto}</p>
-        <p><strong>Descripción:</strong> ${info.descripcion}</p>
-        <p><strong>Precio:</strong> ${info.precio}</p>
-        <p><strong>Stock:</strong> ${info.stock}</p>
-        <p><strong>Categoría:</strong> ${info.categoria}</p>
-        <p><strong>Fecha de recepción:</strong> ${data.fecha_recepcion}</p>
-      </div>`;
-  } else {
-    document.getElementById('resultado').innerHTML = `<p class="error">¡Código no encontrado!</p><p>${decodedText}</p>`;
-  }
-}
-
-function consultarCodigo() {
-  const codigo = document.getElementById('manualCode').value.trim();
-  if(codigo) consultarCodigoManual(codigo);
-}
-
-// Detectar código
-function onScanSuccess(decodedText, decodedResult) {
-  if(scanner){
-    scanner.stop().then(() => console.log("Cámara detenida tras escanear"))
-    .catch(err => console.error(err));
-  }
-  consultarCodigoManual(decodedText);
-}
-
-function onScanFailure(error){}
-
-// Activar cámara con botón
 document.getElementById("startBtn").addEventListener("click", () => {
-  if(scanner) return; // evitar duplicar
+  if(scanner) return;
   const readerWidth = document.getElementById("reader").clientWidth;
   scanner = new Html5Qrcode("reader");
   scanner.start(
     { facingMode: "environment" },
-    { fps: 10, qrbox: { width: readerWidth, height: 250 } }, // altura suficiente
-    onScanSuccess,
-    onScanFailure
+    { fps: 10, qrbox: { width: readerWidth, height: 250 } },
+    (decodedText) => {
+      console.log("Código leído:", decodedText);
+      scanner.stop().then(() => console.log("Cámara detenida")).catch(console.error);
+    },
+    (error) => { /* ignorar errores de frame */ }
   ).catch(err => console.error("Error iniciando cámara:", err));
 });
 </script>
 </body>
 </html>
-
