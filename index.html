@@ -16,7 +16,7 @@ h1 { color: #333; }
 #reader {
   width: 80%;
   max-width: 360px;
-  height: 200px; /* altura suficiente para códigos de barras */
+  height: 120px; /* altura más horizontal */
   margin: 20px auto;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -43,10 +43,9 @@ input, button {
 </style>
 </head>
 <body>
-<h1>Escanear Código de Barras</h1>
+<h1>Escaneo automático de Código de Barras</h1>
 <div id="reader"></div>
 <div id="resultado"></div>
-<button id="reiniciarBtn" style="display:none;" onclick="reiniciarScanner()">🔄 Volver a escanear</button>
 
 <h3>O ingresar código manualmente:</h3>
 <input type="text" id="manualCode" placeholder="Escribe el código">
@@ -67,7 +66,6 @@ async function consultarCodigoManual(codigo) {
   } catch (err) {
     console.error(err);
     document.getElementById('resultado').innerHTML = `<p class="error">❌ Error al consultar la API.</p>`;
-    document.getElementById('reiniciarBtn').style.display = "block";
   }
 }
 
@@ -86,7 +84,6 @@ function mostrarResultado(data, decodedText) {
   } else {
     document.getElementById('resultado').innerHTML = `<p class="error">¡Código no encontrado!</p><p>${decodedText}</p>`;
   }
-  document.getElementById('reiniciarBtn').style.display = "block";
 }
 
 function consultarCodigo() {
@@ -95,38 +92,32 @@ function consultarCodigo() {
 }
 
 function onScanSuccess(decodedText, decodedResult) {
+  // Apenas se detecta el código, detiene la cámara
   scanner.stop().then(() => {
     console.log("Cámara detenida tras escanear");
-    document.getElementById('reiniciarBtn').style.display = "block";
   }).catch(err => console.error(err));
 
   consultarCodigoManual(decodedText);
 }
 
 function onScanFailure(error) {
-  // No hacer nada, solo ignora errores de frames que no detectan código
+  // Ignorar frames que no detectan código
 }
 
 function iniciarScanner() {
   const containerWidth = document.getElementById('reader').clientWidth;
-  const qrboxHeight = 200;
+  const qrboxHeight = 120; // rectangular horizontal
 
   scanner = new Html5Qrcode("reader");
   scanner.start(
-    { facingMode: "environment" }, // trasera en móviles
-    { fps: 10, qrbox: { width: containerWidth, height: qrboxHeight } }, // rectangular
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: containerWidth, height: qrboxHeight } },
     onScanSuccess,
     onScanFailure
   ).catch(err => console.error("Error iniciando cámara:", err));
 }
 
-function reiniciarScanner() {
-  document.getElementById('resultado').innerHTML = "";
-  document.getElementById('reiniciarBtn').style.display = "none";
-  iniciarScanner();
-}
-
-// Inicia scanner al cargar
+// Inicia scanner automáticamente al cargar la página
 window.onload = iniciarScanner;
 </script>
 </body>
