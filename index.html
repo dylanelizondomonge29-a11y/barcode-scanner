@@ -6,15 +6,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; text-align: center; background-color: #f4f4f4; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+      background-color: #f4f4f4;
+    }
+
     h1 { color: #333; }
 
     /* Contenedor de cámara rectangular */
     #reader {
-      width: 100%;
-      max-width: 400px;
-      height: 120px; /* altura baja para rectángulo horizontal */
-      margin: 20px auto;
+      width: 60%;
+      max-width: 200px;  /* ancho máximo */
+      height: 100px;     /* altura pequeña para forma horizontal */
+      margin: 10px auto;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
     }
 
     input, button {
@@ -27,6 +37,7 @@
     }
 
     .error { color: red; }
+
     .resultado {
       background: #fff;
       border-radius: 8px;
@@ -115,7 +126,7 @@
 
     function iniciarScanner() {
       const containerWidth = document.getElementById('reader').clientWidth;
-      const qrboxHeight = 120; // altura baja para rectángulo horizontal
+      const qrboxHeight = 120; // altura pequeña para forma rectangular
 
       const config = { 
         fps: 10, 
