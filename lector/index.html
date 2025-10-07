@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Escaneo de Código de Barras</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; text-align: center; background-color: #f4f4f4; }
+    h1 { color: #333; }
+
+    /* Contenedor de cámara rectangular */
+    #reader {
+      width: 100%;
+      max-width: 400px;
+      height: 120px; /* altura baja para rectángulo horizontal */
+      margin: 20px auto;
+    }
+
+    input, button {
+      width: 100%;
+      max-width: 400px;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    .error { color: red; }
+    .resultado {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 15px;
+      margin-top: 20px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>Escanear Código de Barras</h1>
+
+  <div id="reader"></div>
+  <div id="resultado"></div>
+  <button id="reiniciarBtn" style="display:none;" onclick="reiniciarScanner()">🔄 Volver a escanear</button>
+
+  <h3>O ingresar código manualmente:</h3>
+  <input type="text" id="manualCode" placeholder="Escribe el código">
+  <button onclick="consultarCodigo()">Consultar</button>
+
+  <script>
+    const apiKey = "123456"; 
+    let html5QrcodeScanner;
+
+    function mostrarResultado(data, decodedText) {
+      if(!data.error && data.informacion){
+        const info = data.informacion;
+        document.getElementById('resultado').innerHTML = `
+          <div class="resultado">
+            <h3>Información del Producto:</h3>
+            <p><strong>Producto:</strong> ${info.producto}</p>
+            <p><strong>Descripción:</strong> ${info.descripcion}</p>
+            <p><strong>Precio:</strong> ${info.precio}</p>
+            <p><strong>Stock:</strong> ${info.stock}</p>
+            <p><strong>Categoría:</strong> ${info.categoria}</p>
+            <p><strong>Fecha de recepción:</strong> ${data.fecha_recepcion}</p>
+          </div>
+        `;
+      } else {
+        document.getElementById('resultado').innerHTML = `
+          <p class="error"><strong>¡Código no encontrado en la base de datos!</strong></p>
+          <p>Código ingresado: ${decodedText}</p>
+        `;
+      }
+      document.getElementById('reiniciarBtn').style.display = "block";
+    }
+
+    async function consultarCodigoManual(codigo) {
+      try {
+        const originalURL = `http://62.146.226.238/codigos/codigo_barras.php?api_key=${apiKey}&codigo_barras=${codigo}`;
+        const proxyURL = `https://api.allorigins.win/get?url=${encodeURIComponent(originalURL)}`;
+        const response = await fetch(proxyURL);
+        const dataWrapped = await response.json();
+        const data = JSON.parse(dataWrapped.contents);
+        mostrarResultado(data, codigo);
+      } catch (err) {
+        console.error("Error consultando API:", err);
+        document.getElementById('resultado').innerHTML = `<p class="error">❌ Error al consultar la API.</p>`;
+        document.getElementById('reiniciarBtn').style.display = "block";
+      }
+    }
+
+    function consultarCodigo() {
+      const codigo = document.getElementById('manualCode').value.trim();
+      if(codigo) {
+        document.getElementById('resultado').innerHTML = `Consultando información para: ${codigo}...`;
+        consultarCodigoManual(codigo);
+      }
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+      document.getElementById('resultado').innerHTML = `Código escaneado: ${decodedText}<br>Consultando información...`;
+
+      html5QrcodeScanner.clear().then(() => {
+        console.log("Cámara detenida después del escaneo");
+        document.getElementById('reiniciarBtn').style.display = "block";
+      }).catch(err => console.error("Error al detener la cámara:", err));
+
+      consultarCodigoManual(decodedText);
+    }
+
+    function onScanFailure(error) {
+      console.warn(`Error de escaneo: ${error}`);
+    }
+
+    function iniciarScanner() {
+      const containerWidth = document.getElementById('reader').clientWidth;
+      const qrboxHeight = 120; // altura baja para rectángulo horizontal
+
+      const config = { 
+        fps: 10, 
+        qrbox: { width: containerWidth, height: qrboxHeight },
+        formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13 ] 
+      };
+
+      document.getElementById('reader').style.height = qrboxHeight + 'px';
+
+      html5QrcodeScanner = new Html5QrcodeScanner("reader", config);
+      html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    }
+
+    function reiniciarScanner() {
+      document.getElementById('resultado').innerHTML = "";
+      document.getElementById('reiniciarBtn').style.display = "none";
+      iniciarScanner();
+    }
+
+    window.onload = iniciarScanner;
+  </script>
+</body>
+</html>
