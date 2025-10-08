@@ -112,14 +112,27 @@
   <div id="info"></div>
 
   <script>
-    const codeReader = new ZXing.BrowserMultiFormatReader();
+    // Configuración de formatos de códigos
+    const hints = new Map();
+    hints.set(
+      ZXing.DecodeHintType.POSSIBLE_FORMATS,
+      [
+        ZXing.BarcodeFormat.UPC_A,
+        ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.EAN_8,
+        ZXing.BarcodeFormat.CODE_128,
+        ZXing.BarcodeFormat.CODE_39
+      ]
+    );
+
+    const codeReader = new ZXing.BrowserMultiFormatReader(hints);
     const video = document.getElementById("video");
     const videoContainer = document.getElementById("video-container");
     const info = document.getElementById("info");
     const escanearBtn = document.getElementById("escanear");
     const buscarBtn = document.getElementById("buscarManual");
 
-    // Función para mostrar info del producto usando fetch a /api/proxy
+    // Mostrar información del producto usando fetch al proxy
     async function mostrarInfo(codigo) {
       info.innerHTML = "🔍 Consultando producto...";
       try {
@@ -145,6 +158,7 @@
       }
     }
 
+    // Función para iniciar el escaneo
     async function iniciarEscaneo() {
       info.innerHTML = "";
       videoContainer.style.display = "block";
@@ -166,12 +180,14 @@
       }
     }
 
+    // Eventos de botones
     escanearBtn.addEventListener("click", iniciarEscaneo);
     buscarBtn.addEventListener("click", () => {
       const code = document.getElementById("manualCode").value.trim();
       if (code) mostrarInfo(code);
     });
 
+    // Iniciar escaneo automáticamente al cargar
     window.addEventListener("load", iniciarEscaneo);
   </script>
 </body>
