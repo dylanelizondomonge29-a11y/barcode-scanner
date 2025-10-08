@@ -1,177 +1,223 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Lector de Códigos de Barras</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lector de Códigos de Barra</title>
   <script src="https://unpkg.com/@zxing/library@latest"></script>
   <style>
-  body {
-    font-family: Arial, Helvetica, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 18px;
-    background: #f2f6fb;
-  }
+    :root {
+      --color-primario: #1976d2;
+      --color-fondo: #f3f6fb;
+      --color-texto: #222;
+      --radio: 12px;
+    }
 
-  h1 {
-    margin: 6px;
-  }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: var(--color-fondo);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
 
-  /* 🔹 Video horizontal con proporción 16:9 */
-  #video {
-    width: 90%;
-    max-width: 600px;
-    aspect-ratio: 16 / 9;
-    border-radius: 12px;
-    background: #000;
-    object-fit: cover;
-    transform: scaleX(-1); /* opcional: espejo como cámara selfie */
-  }
+    h1 {
+      color: var(--color-texto);
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      text-align: center;
+      margin-bottom: 20px;
+    }
 
-  .controls {
-    margin-top: 10px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+    /* 🔹 Video responsive con proporción 16:9 */
+    #video-container {
+      position: relative;
+      width: 100%;
+      max-width: 700px;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: var(--radio);
+      overflow: hidden;
+      display: none;
+    }
 
-  input[type="text"] {
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #bbb;
-    width: 220px;
-  }
+    #video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* efecto espejo */
+    }
 
-  button {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: none;
-    background: #1976d2;
-    color: #fff;
-    cursor: pointer;
-  }
+    /* 🔹 Marco de escaneo */
+    #marco {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 80%;
+      height: 60%;
+      transform: translate(-50%, -50%);
+      border: 2px solid #00ff99;
+      border-radius: var(--radio);
+      box-shadow: 0 0 10px rgba(0,255,153,0.5);
+      pointer-events: none;
+    }
 
-  button.secondary {
-    background: #555;
-  }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 18px;
+      width: 100%;
+      max-width: 700px;
+    }
 
-  #info {
-    margin-top: 12px;
-    background: #fff;
-    padding: 12px;
-    border-radius: 10px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-    width: 90%;
-    max-width: 640px;
-    text-align: left;
-  }
+    input[type="text"] {
+      flex: 1;
+      min-width: 160px;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: var(--radio);
+      border: 1px solid #bbb;
+    }
 
-  .small {
-    font-size: 0.9em;
-    color: #666;
-  }
-</style>
+    button {
+      background: var(--color-primario);
+      color: white;
+      border: none;
+      border-radius: var(--radio);
+      padding: 10px 14px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.2s;
+      flex-shrink: 0;
+    }
 
+    button:hover {
+      background: #0f5ebc;
+    }
+
+    button.secondary {
+      background: #555;
+    }
+
+    #info {
+      margin-top: 20px;
+      background: #fff;
+      padding: 16px;
+      border-radius: var(--radio);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 700px;
+      word-break: break-word;
+    }
+
+    #info h2 {
+      margin: 0 0 8px;
+      font-size: 1.2rem;
+      color: var(--color-primario);
+    }
+
+    #info p {
+      margin: 6px 0;
+      font-size: 1rem;
+    }
+
+    .small {
+      font-size: 0.9rem;
+      color: #666;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 600px) {
+      #marco {
+        width: 90%;
+        height: 50%;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h2>📷 Lector de Código de Barras</h2>
+  <h1>Lector de Código de Barras</h1>
 
-  <video id="video" autoplay></video>
+  <div id="video-container">
+    <video id="video"></video>
+    <div id="marco"></div>
+  </div>
 
-  <div>
-    <input type="text" id="codigoManual" placeholder="Ingresar código manualmente">
-    <button onclick="buscarManual()">Buscar</button>
-    <button onclick="reiniciarCamara()">Volver a escanear</button>
+  <div class="controls">
+    <input type="text" id="manualCode" placeholder="Ingresar código manualmente" />
+    <button id="buscarManual">Buscar</button>
+    <button id="escanear">📷 Escanear</button>
   </div>
 
   <div id="info"></div>
 
-  <script>
-    const video = document.getElementById('video');
-    const infoDiv = document.getElementById('info');
-    const codeReader = new ZXing.BrowserBarcodeReader();
-    let currentStream = null;
+  <p class="small">Powered by ZXing & API local</p>
 
-    // 🔹 Iniciar cámara al cargar la página
-    window.addEventListener('load', () => {
-      iniciarCamara();
+  <script>
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const video = document.getElementById("video");
+    const videoContainer = document.getElementById("video-container");
+    const info = document.getElementById("info");
+    const escanearBtn = document.getElementById("escanear");
+    const buscarBtn = document.getElementById("buscarManual");
+
+    async function mostrarInfo(codigo) {
+      info.innerHTML = "🔍 Consultando producto...";
+      try {
+        const res = await fetch(`proxy.php?codigo=${codigo}`);
+        const data = await res.json();
+
+        if (data.error) {
+          info.innerHTML = `<p>❌ Error al consultar el producto.</p>`;
+          return;
+        }
+
+        const p = data.informacion;
+        info.innerHTML = `
+          <h2>${p.producto}</h2>
+          <p><strong>Descripción:</strong> ${p.descripcion}</p>
+          <p><strong>Precio:</strong> ₡${p.precio}</p>
+          <p><strong>Stock:</strong> ${p.stock}</p>
+          <p><strong>Categoría:</strong> ${p.categoria}</p>
+        `;
+      } catch (e) {
+        info.innerHTML = `<p>⚠️ No se pudo conectar con el servidor.</p>`;
+      }
+    }
+
+    async function iniciarEscaneo() {
+      info.innerHTML = "";
+      videoContainer.style.display = "block";
+      escanearBtn.disabled = true;
+      try {
+        const result = await codeReader.decodeOnceFromVideoDevice(undefined, "video");
+        if (result && result.text) {
+          videoContainer.style.display = "none";
+          await codeReader.reset();
+          mostrarInfo(result.text);
+        }
+      } catch (err) {
+        console.error(err);
+        info.innerHTML = "❌ Error al acceder a la cámara.";
+        videoContainer.style.display = "none";
+      } finally {
+        escanearBtn.disabled = false;
+      }
+    }
+
+    escanearBtn.addEventListener("click", iniciarEscaneo);
+    buscarBtn.addEventListener("click", () => {
+      const code = document.getElementById("manualCode").value.trim();
+      if (code) mostrarInfo(code);
     });
 
-    function iniciarCamara() {
-      infoDiv.innerHTML = "Iniciando cámara...";
-      codeReader
-        .getVideoInputDevices()
-        .then(videoInputDevices => {
-          if (videoInputDevices.length === 0) {
-            infoDiv.innerHTML = "❌ No se detectó cámara.";
-            return;
-          }
-          const firstDeviceId = videoInputDevices[0].deviceId;
-          codeReader.decodeFromVideoDevice(firstDeviceId, video, (result, err) => {
-            if (result) {
-              detenerCamara();
-              const codigo = result.text.trim();
-              mostrarInfo(`Código detectado: ${codigo}`);
-              buscarCodigo(codigo);
-            }
-          });
-        })
-        .catch(err => {
-          infoDiv.innerHTML = "Error al iniciar cámara: " + err;
-        });
-    }
-
-    function detenerCamara() {
-      codeReader.reset();
-      if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
-      }
-    }
-
-    function reiniciarCamara() {
-      infoDiv.innerHTML = "";
-      iniciarCamara();
-    }
-
-    function buscarCodigo(codigo) {
-      infoDiv.innerHTML = "🔍 Consultando producto...";
-      fetch(`/api/proxy?codigo=${codigo}`)
-
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            mostrarInfo("❌ Código no encontrado o error en API.");
-          } else {
-            const p = data.informacion;
-            mostrarInfo(`
-              <strong>✅ Producto encontrado</strong><br>
-              <b>Código:</b> ${data.codigo_recibido}<br>
-              <b>Producto:</b> ${p.producto}<br>
-              <b>Descripción:</b> ${p.descripcion}<br>
-              <b>Precio:</b> ${p.precio}<br>
-              <b>Stock:</b> ${p.stock}<br>
-              <b>Categoría:</b> ${p.categoria}
-            `);
-          }
-        })
-        .catch(() => mostrarInfo("❌ Error al consultar el producto."));
-    }
-
-    function buscarManual() {
-      const codigo = document.getElementById('codigoManual').value.trim();
-      if (codigo === "") {
-        alert("Ingrese un código.");
-        return;
-      }
-      detenerCamara();
-      buscarCodigo(codigo);
-    }
-
-    function mostrarInfo(html) {
-      infoDiv.innerHTML = html;
-    }
+    // Enciende cámara automáticamente al cargar
+    window.addEventListener("load", iniciarEscaneo);
   </script>
 </body>
 </html>
