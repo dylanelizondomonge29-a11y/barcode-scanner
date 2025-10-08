@@ -5,44 +5,75 @@
   <title>Lector de Códigos de Barras</title>
   <script src="https://unpkg.com/@zxing/library@latest"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-    }
-    video {
-      width: 80%;
-      max-width: 400px;
-      border-radius: 10px;
-      margin: 10px 0;
-    }
-    #info {
-      background: #fff;
-      border-radius: 10px;
-      padding: 15px;
-      margin-top: 15px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      display: inline-block;
-      text-align: left;
-    }
-    input, button {
-      padding: 10px;
-      margin: 5px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    button {
-      background-color: #1976d2;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0d47a1;
-    }
-  </style>
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 18px;
+    background: #f2f6fb;
+  }
+
+  h1 {
+    margin: 6px;
+  }
+
+  /* 🔹 Video horizontal con proporción 16:9 */
+  #video {
+    width: 90%;
+    max-width: 600px;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    background: #000;
+    object-fit: cover;
+    transform: scaleX(-1); /* opcional: espejo como cámara selfie */
+  }
+
+  .controls {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  input[type="text"] {
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #bbb;
+    width: 220px;
+  }
+
+  button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    background: #1976d2;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  button.secondary {
+    background: #555;
+  }
+
+  #info {
+    margin-top: 12px;
+    background: #fff;
+    padding: 12px;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    width: 90%;
+    max-width: 640px;
+    text-align: left;
+  }
+
+  .small {
+    font-size: 0.9em;
+    color: #666;
+  }
+</style>
+
 </head>
 <body>
   <h2>📷 Lector de Código de Barras</h2>
