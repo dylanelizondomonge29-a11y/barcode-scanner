@@ -106,7 +106,8 @@
 
     function buscarCodigo(codigo) {
       infoDiv.innerHTML = "🔍 Consultando producto...";
-      fetch(`proxy.php?codigo=${codigo}`)
+      fetch(`/api/proxy?codigo=${codigo}`)
+
         .then(res => res.json())
         .then(data => {
           if (data.error) {
