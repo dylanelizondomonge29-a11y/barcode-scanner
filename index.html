@@ -58,17 +58,18 @@ let html5QrScanner;
 
 async function consultarCodigoManual(codigo) {
   try {
-    // Usamos el proxy local
+    // Aquí usamos SOLO el proxy
     const proxyURL = `proxy.php?codigo=${encodeURIComponent(codigo)}`;
     const response = await fetch(proxyURL);
     const data = await response.json();
     mostrarResultado(data, codigo);
   } catch (err) {
-    console.error(err);
+    console.error("Error consultando API:", err);
     document.getElementById('resultado').innerHTML = `<p class="error">❌ Error al consultar la API.</p>`;
     document.getElementById('reiniciarBtn').style.display = "block";
   }
 }
+
 
 
 function mostrarResultado(data, decodedText) {
@@ -96,9 +97,14 @@ function consultarCodigo() {
 }
 
 function onScanSuccess(decodedText) {
-  html5QrScanner.clear().then(() => console.log("Cámara detenida tras escanear")).catch(console.error);
+  html5QrScanner.clear()
+    .then(() => console.log("Cámara detenida tras escanear"))
+    .catch(console.error);
+
+  // Pasamos el código al proxy
   consultarCodigoManual(decodedText);
 }
+
 
 function onScanFailure(error) {
   // opcional: console.warn(error);
