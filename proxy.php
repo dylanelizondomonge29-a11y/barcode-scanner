@@ -1,20 +1,20 @@
 <?php
-header('Content-Type: application/json');
+header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
 
 if (!isset($_GET['codigo'])) {
-    echo json_encode(['error' => true, 'mensaje' => 'No se recibió código']);
-    exit;
+  echo json_encode(["error" => true, "mensaje" => "Falta el parámetro 'codigo'"]);
+  exit;
 }
 
-$apiKey = '123456'; // tu API key
-$codigo = urlencode($_GET['codigo']);
-$url = "http://62.146.226.238/codigos/codigo_barras.php?api_key=$apiKey&codigo_barras=$codigo";
+$codigo = $_GET['codigo'];
+$apiUrl = "http://62.146.226.238/codigos/codigo_barras.php?api_key=123456&codigo_barras=" . urlencode($codigo);
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-$response = curl_exec($ch);
-curl_close($ch);
+$response = @file_get_contents($apiUrl);
 
-echo $response;
+if ($response === FALSE) {
+  echo json_encode(["error" => true, "mensaje" => "No se pudo conectar con la API."]);
+} else {
+  echo $response;
+}
 ?>

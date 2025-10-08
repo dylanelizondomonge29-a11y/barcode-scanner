@@ -1,135 +1,145 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Escaneo de Código de Barras</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://unpkg.com/html5-qrcode"></script>
-<style>
-  body {
-    font-family: Arial;
-    text-align: center;
-    padding: 20px;
-    background: #f4f4f4;
-  }
-  #reader {
-    width: 80%;
-    max-width: 360px;
-    height: 200px;
-    margin: 20px auto;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #000;
-  }
-  input, button {
-    width: 80%;
-    max-width: 360px;
-    padding: 10px;
-    margin: 10px auto;
-    font-size: 16px;
-    display: block;
-  }
-  .resultado {
-    background: #fff;
-    padding: 15px;
-    margin-top: 20px;
-    border-radius: 8px;
-    text-align: left;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  }
-  .error { color:red; }
-</style>
+  <meta charset="UTF-8">
+  <title>Lector de Códigos de Barras</title>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    video {
+      width: 80%;
+      max-width: 400px;
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+    #info {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      display: inline-block;
+      text-align: left;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background-color: #1976d2;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0d47a1;
+    }
+  </style>
 </head>
 <body>
+  <h2>📷 Lector de Código de Barras</h2>
 
-<h1>Escaneo de Código de Barras</h1>
+  <video id="video" autoplay></video>
 
-<div id="reader"></div>
-<div id="resultado"></div>
-<button id="reiniciarBtn" style="display:none;" onclick="reiniciarScanner()">🔄 Volver a escanear</button>
+  <div>
+    <input type="text" id="codigoManual" placeholder="Ingresar código manualmente">
+    <button onclick="buscarManual()">Buscar</button>
+    <button onclick="reiniciarCamara()">Volver a escanear</button>
+  </div>
 
-<h3>O ingresar código manualmente:</h3>
-<input type="text" id="manualCode" placeholder="Escribe el código">
-<button onclick="consultarCodigo()">Consultar</button>
+  <div id="info"></div>
 
-<script>
-let html5QrScanner;
+  <script>
+    const video = document.getElementById('video');
+    const infoDiv = document.getElementById('info');
+    const codeReader = new ZXing.BrowserBarcodeReader();
+    let currentStream = null;
 
-async function consultarCodigoManual(codigo) {
-  try {
-    // Aquí usamos SOLO el proxy
-    const proxyURL = `proxy.php?codigo=${encodeURIComponent(codigo)}`;
-    const response = await fetch(proxyURL);
-    const data = await response.json();
-    mostrarResultado(data, codigo);
-  } catch (err) {
-    console.error("Error consultando API:", err);
-    document.getElementById('resultado').innerHTML = `<p class="error">❌ Error al consultar la API.</p>`;
-    document.getElementById('reiniciarBtn').style.display = "block";
-  }
-}
+    // 🔹 Iniciar cámara al cargar la página
+    window.addEventListener('load', () => {
+      iniciarCamara();
+    });
 
+    function iniciarCamara() {
+      infoDiv.innerHTML = "Iniciando cámara...";
+      codeReader
+        .getVideoInputDevices()
+        .then(videoInputDevices => {
+          if (videoInputDevices.length === 0) {
+            infoDiv.innerHTML = "❌ No se detectó cámara.";
+            return;
+          }
+          const firstDeviceId = videoInputDevices[0].deviceId;
+          codeReader.decodeFromVideoDevice(firstDeviceId, video, (result, err) => {
+            if (result) {
+              detenerCamara();
+              const codigo = result.text.trim();
+              mostrarInfo(`Código detectado: ${codigo}`);
+              buscarCodigo(codigo);
+            }
+          });
+        })
+        .catch(err => {
+          infoDiv.innerHTML = "Error al iniciar cámara: " + err;
+        });
+    }
 
+    function detenerCamara() {
+      codeReader.reset();
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+    }
 
-function mostrarResultado(data, decodedText) {
-  if (!data.error && data.informacion) {
-    const info = data.informacion;
-    document.getElementById('resultado').innerHTML = `
-      <div class="resultado">
-        <p><strong>Producto:</strong> ${info.producto}</p>
-        <p><strong>Descripción:</strong> ${info.descripcion}</p>
-        <p><strong>Precio:</strong> ${info.precio}</p>
-        <p><strong>Stock:</strong> ${info.stock}</p>
-        <p><strong>Categoría:</strong> ${info.categoria}</p>
-        <p><strong>Fecha de recepción:</strong> ${data.fecha_recepcion}</p>
-      </div>
-    `;
-  } else {
-    document.getElementById('resultado').innerHTML = `<p class="error">¡Código no encontrado!</p><p>${decodedText}</p>`;
-  }
-  document.getElementById('reiniciarBtn').style.display = "block";
-}
+    function reiniciarCamara() {
+      infoDiv.innerHTML = "";
+      iniciarCamara();
+    }
 
-function consultarCodigo() {
-  const codigo = document.getElementById('manualCode').value.trim();
-  if(codigo) consultarCodigoManual(codigo);
-}
+    function buscarCodigo(codigo) {
+      infoDiv.innerHTML = "🔍 Consultando producto...";
+      fetch(`proxy.php?codigo=${codigo}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            mostrarInfo("❌ Código no encontrado o error en API.");
+          } else {
+            const p = data.informacion;
+            mostrarInfo(`
+              <strong>✅ Producto encontrado</strong><br>
+              <b>Código:</b> ${data.codigo_recibido}<br>
+              <b>Producto:</b> ${p.producto}<br>
+              <b>Descripción:</b> ${p.descripcion}<br>
+              <b>Precio:</b> ${p.precio}<br>
+              <b>Stock:</b> ${p.stock}<br>
+              <b>Categoría:</b> ${p.categoria}
+            `);
+          }
+        })
+        .catch(() => mostrarInfo("❌ Error al consultar el producto."));
+    }
 
-function onScanSuccess(decodedText) {
-  html5QrScanner.clear()
-    .then(() => console.log("Cámara detenida tras escanear"))
-    .catch(console.error);
+    function buscarManual() {
+      const codigo = document.getElementById('codigoManual').value.trim();
+      if (codigo === "") {
+        alert("Ingrese un código.");
+        return;
+      }
+      detenerCamara();
+      buscarCodigo(codigo);
+    }
 
-  // Pasamos el código al proxy
-  consultarCodigoManual(decodedText);
-}
-
-
-function onScanFailure(error) {
-  // opcional: console.warn(error);
-}
-
-function iniciarScanner() {
-  const containerWidth = document.getElementById('reader').clientWidth;
-  html5QrScanner = new Html5Qrcode("reader");
-  html5QrScanner.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: { width: containerWidth, height: 200 } },
-    onScanSuccess,
-    onScanFailure
-  ).catch(err => console.error("Error iniciando cámara:", err));
-}
-
-function reiniciarScanner() {
-  document.getElementById('resultado').innerHTML = "";
-  document.getElementById('reiniciarBtn').style.display = "none";
-  iniciarScanner();
-}
-
-// Inicia el scanner al cargar la página
-window.onload = iniciarScanner;
-</script>
-
+    function mostrarInfo(html) {
+      infoDiv.innerHTML = html;
+    }
+  </script>
 </body>
 </html>
